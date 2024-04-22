@@ -10,6 +10,9 @@ Let's dive into the world of quantization and discover how it can optimize the d
 
 - [Installation](#installation)
 - [Overview](#overview)
+  - [Downcasting](#downcasting)
+  - [Quantization](#quantization)
+    - [Linear Quantization vs Downcasting](#linear-quantization-vs-downcasting)
 
 ## Installation
 
@@ -72,3 +75,44 @@ model.to(torch.float16)
 The implementation can be found in [PyTorch Model Downcasting](notebooks/2_TorchModel_Downcasting.ipynb).
 
 The downcasting process can be applied on HuggingFace models, as shown in [Hugging Face Model Downcasting](notebooks/3_Transformers_Model_Downcasting.ipynb).
+
+### Quantization
+
+The process of converting a tensor from a floating-point precision to a lower bit-width integer or float is known as `quantization`. The quantization process can be applied to different parts of the model, such as `weights` and/or `activations`, to reduce the memory footprint and computational requirements of the model.
+
+[Quanto](https://huggingface.co/blog/quanto-introduction) is a library developed by `Hugging Face` that provides an easy-to-use interface for quantizing models.
+
+A hands-on example is in [Quantization with Quanto](notebooks/4_Quantization_with_Quanto.ipynb).
+
+The process is listed below:
+
+1. **Quantize**: Quantize the model's weights and/or activations to lower bit-width integers or floats.
+
+The formula of `linear quantization` is shown below:
+
+$$ r = s(q-z) $$
+
+Where:
+- $r$: the original value (e.g. `FP32`)
+- $q$: the quantized value (e.g. `INT8`)
+- $s$: the scale factor
+- $z$: the zero-point
+
+To calculate $r$ & $z$, the formulas are shown below:
+
+$$ s = \frac{r_{max} - r_{min}}{q_{max} - q_{min}} $$
+
+$$ z = int(round(q_{min} - r_{min} / s)) $$
+
+2. `Optional` **Calibration**: Calibrate the quantized model to minimize the quantization error and maximize the performance.
+
+3. `Optional` **Quantization Aware Training**: Train the quantized model using quantization-aware training to further optimize the model for deployment.
+
+#### Linear Quantization vs Downcasting
+
+The difference between the `linear quantization` method with the `downcasting` method take into account:
+
+- `Downcasting`: convert the model's parameters to a more compact data type (e.g. `bfloat16`). `Downcasting` may work with the `bfloat16` data type, but the model performance will likely degrade with any smaller data type, and won't work if you convert to an integer data type (e.g. `int8`).
+  - During inference: the model performs its calculations in `bfloat16` data type, and its activations are in same data type.
+- `Linear Quantization`: enables the `quantized model` to maintain performance much closer to the original model by converting from the compressed data type back to the original `FP32` data type `during inference`.
+  - During inference: the model performs the matrix multiplications in `FP32`, and the activations are in `FP32`. This enables you to quantize the model in data types smaller than `bfloat16`, such as `int8`, in this example.
