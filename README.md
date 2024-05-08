@@ -116,3 +116,17 @@ The difference between the `linear quantization` method with the `downcasting` m
   - During inference: the model performs its calculations in `bfloat16` data type, and its activations are in same data type.
 - `Linear Quantization`: enables the `quantized model` to maintain performance much closer to the original model by converting from the compressed data type back to the original `FP32` data type `during inference`.
   - During inference: the model performs the matrix multiplications in `FP32`, and the activations are in `FP32`. This enables you to quantize the model in data types smaller than `bfloat16`, such as `int8`, in this example.
+
+#### Asymmetric, Symmetric, Per Channel Quantization
+
+The `linear quantization` can be `symmetric` or `asymmetric`. The difference between the two is the `zero-point`:
+
+- `Symmetric`: the zero-point is `0`, and the quantized values are distributed symmetrically around the zero-point.
+- `Asymmetric`: the zero-point is non-zero, and the quantized values are distributed asymmetrically around the zero-point.
+- `Per Channel`: the zero-point is calculated per channel, which allows the quantized values to be distributed more flexibly around the zero-point.
+
+The `asymmetric quantization` can be used to represent the `FP32` data type more accurately, as it allows the quantized values to be distributed more flexibly around the zero-point. When using the asymmetric quantization, the quantized range is fully utilized.
+
+On the other hand, the `symmetric quantization` is simpler and more efficient, as it uses `0` as the zero-point. However, as it is biased towards one side (e.g. positive values as the ReLU activation function). The memory footprint is reduced, because the zero point is not stored.
+
+Finally, the `per channel quantization` allows the quantized values to be distributed more flexibly around the zero-point, which can improve the model's performance. It is particularly useful when the model has different ranges of values across different channels.
